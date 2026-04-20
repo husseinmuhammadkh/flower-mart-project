@@ -44,19 +44,33 @@ async function buildAll() {
     ...Object.keys(pkg.dependencies || {}),
     ...Object.keys(pkg.devDependencies || {}),
   ];
+
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",
-    bundle: false,
+    bundle: true,
     format: "esm",
     outfile: "dist/index.js",
     define: {
       "process.env.NODE_ENV": '"production"',
     },
     minify: true,
-    external: externals,
+    external: [
+      ...externals,
+      "fs",
+      "path",
+      "events",
+      "http",
+      "https",
+      "stream",
+      "util",
+      "crypto",
+      "zlib",
+      "os",
+      "tty",
+    ],
     logLevel: "info",
   });
 }
