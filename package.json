@@ -78,7 +78,8 @@
     "ws": "^8.18.0",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.11",
+    "esbuild": "^0.25.0"
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.15",
@@ -108,7 +109,6 @@
     }
   },
   "optionalDependencies": {
-    "esbuild": "^0.25.0",
     "bufferutil": "^4.0.8"
   }
 }
