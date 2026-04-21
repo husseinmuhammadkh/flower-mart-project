@@ -113,8 +113,8 @@ export default function CreateUser() {
                 className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all text-right"
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                <option value="user">مستخدم عادي</option>
-                <option value="admin">مدير (Admin)</option>
+                {/* <option value="user">مستخدم عادي</option>
+                <option value="admin">مدير (Admin)</option> */}
               </select>
             </div>
 
