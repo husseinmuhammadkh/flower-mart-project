@@ -1,22 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["client/src/*"],
-      "@shared/*": ["shared/*"]
-    },
-    "jsx": "react-jsx",
     "strict": false,
     "skipLibCheck": true,
+    "noEmitOnError": false,
     "esModuleInterop": true,
-    "types": ["node"]
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./client/src/*"],
+      "@shared/*": ["./shared/*"]
+    },
+    "outDir": "dist"
   },
-  "include": [
-    "client",
-    "server",
-    "shared"
-  ]
+  "include": ["client", "server", "shared"]
 }
