@@ -19,7 +19,7 @@
     "jsx": "preserve",
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "allowImportingTsExtensions": true,
+
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "types": ["node", "vite/client"],
@@ -30,4 +30,4 @@
     }
   }
 }
-// تعديل كامل للملف 
+//   مرتين تعديل كامل للملف 
