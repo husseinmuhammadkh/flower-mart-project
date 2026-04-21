@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: 'hm2653601@gmail.com',
-    pass: 'vanz ctjr cyup kvpo'
+    pass: process.env.EMAIL_PASS
   },
   tls: {
     rejectUnauthorized: false
@@ -220,7 +220,24 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         `
       };
 
-      transporter.sendMail(mailOptions).catch(e => console.error("Mail error:", e.message));
+      await Promise.all([
+  transporter.sendMail(mailOptions),
+
+  transporter.sendMail({
+    from: '"متجر روزاليا 🌸" <hm2653601@gmail.com>',
+    to: "hm2653601@gmail.com",
+    subject: `طلب جديد رقم #${order.id}`,
+    html: `
+      <div dir="rtl">
+        <h2>طلب جديد 🌸</h2>
+        <p><b>الاسم:</b> ${order.customerName}</p>
+        <p><b>الجوال:</b> ${order.customerPhone}</p>
+        <p><b>العنوان:</b> ${order.customerAddress}</p>
+        <p><b>الإجمالي:</b> ${order.total} ر.س</p>
+      </div>
+    `
+  })
+]);
       res.status(201).json(order);
     } catch (err) {
       res.status(400).json({ message: "حدث خطأ أثناء معالجة الطلب" });
