@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { UserPlus, Phone, Mail, Lock, User as UserIcon, ShieldCheck } from "lucide-react";
+import { UserPlus, Phone, Mail, Lock, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CreateUser() {
@@ -17,30 +17,100 @@ export default function CreateUser() {
     role: "user"
   });
 
+  // validation
+  const validateForm = () => {
+    const { username, email, password, phoneNumber } = formData;
+
+    // username
+    if (username.trim().length < 3) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"
+      });
+      return false;
+    }
+
+    // email
+    const emailRegex =
+      /^[a-zA-Z0-9._%+-]+@(gmail|hotmail|outlook|yahoo)\.com$/;
+
+    if (!emailRegex.test(email)) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "يرجى إدخال بريد إلكتروني صحيح"
+      });
+      return false;
+    }
+
+    // password
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      toast({
+        variant: "destructive",
+        title: "كلمة المرور ضعيفة",
+        description:
+          "يجب أن تكون 8 خانات على الأقل وتحتوي حرف كبير وصغير ورقم"
+      });
+      return false;
+    }
+
+    // phone number
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (!phoneRegex.test(phoneNumber)) {
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "رقم الهاتف يجب أن يكون 10 أرقام فقط"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
 
     try {
       const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          username: formData.username.trim(),
+          email: formData.email.trim(),
+          phoneNumber: formData.phoneNumber.trim()
+        }),
       });
 
       const newUser = await response.json();
 
       if (!response.ok) throw new Error("فشل في إنشاء المستخدم");
 
-      toast({ title: "تم بنجاح", description: "أهلاً بك في روزاليا!" });
+      toast({
+        title: "تم بنجاح",
+        description: "أهلاً بك في روزاليا!"
+      });
 
-      // --- التعديل هنا لربط المستخدم الجديد بالبروفايل ---
       localStorage.setItem("currentUser", JSON.stringify(newUser));
-      
-      // التوجيه للبروفايل بدلاً من الرئيسية
-      setLocation("/profile"); 
+
+      setLocation("/profile");
+
     } catch (err) {
-      toast({ variant: "destructive", title: "خطأ", description: "تأكد من البيانات المدخلة" });
+      toast({
+        variant: "destructive",
+        title: "خطأ",
+        description: "تأكد من البيانات المدخلة"
+      });
     } finally {
       setLoading(false);
     }
@@ -70,7 +140,9 @@ export default function CreateUser() {
                 type="text"
                 placeholder="اسم المستخدم"
                 className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-right"
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
               />
             </div>
 
@@ -81,7 +153,9 @@ export default function CreateUser() {
                 type="email"
                 placeholder="البريد الإلكتروني"
                 className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-right"
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
               />
             </div>
 
@@ -92,7 +166,9 @@ export default function CreateUser() {
                 type="text"
                 placeholder="رقم الهاتف"
                 className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-right"
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, phoneNumber: e.target.value })
+                }
               />
             </div>
 
@@ -103,19 +179,10 @@ export default function CreateUser() {
                 type="password"
                 placeholder="كلمة المرور"
                 className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-right"
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
               />
-            </div>
-
-            <div className="relative">
-              <ShieldCheck className="absolute right-4 top-3.5 text-muted-foreground" size={20} />
-              <select
-                className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none appearance-none transition-all text-right"
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              >
-                {/* <option value="user">مستخدم عادي</option>
-                <option value="admin">مدير (Admin)</option> */}
-              </select>
             </div>
 
             <button
