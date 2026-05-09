@@ -93,7 +93,7 @@ export function CartDrawer() {
                           <X size={16} />
                         </button>
                       </div>
-                      <div className="text-primary font-bold">{Number(item.price).toFixed(2)} ر.س</div>
+                      <div className="text-primary font-bold">{Number(item.price).toFixed(2)} د.أ</div>
                       
                       <div className="flex items-center gap-3 mt-2">
                         <div className="flex items-center bg-muted/50 rounded-lg p-1">
@@ -124,7 +124,7 @@ export function CartDrawer() {
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-muted-foreground font-medium">المجموع الإجمالي</span>
                   <span className="text-2xl font-bold text-foreground">
-                    {getCartTotal().toFixed(2)} ر.س
+                    {getCartTotal().toFixed(2)} د.أ
                   </span>
                 </div>
                 <button

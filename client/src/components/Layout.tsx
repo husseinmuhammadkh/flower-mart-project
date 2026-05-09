@@ -21,12 +21,12 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Flower2 size={18} />
               </div>
               <span className="text-xl font-bold tracking-tight text-foreground">
-                روزاليا
+                بلانتو
               </span>
             </div>
             
             <p className="text-muted-foreground text-sm text-center md:text-right">
-              &copy; {new Date().getFullYear()} متجر روزاليا للورود. جميع الحقوق محفوظة.
+              &copy; {new Date().getFullYear()} بلانتو للورود. جميع الحقوق محفوظة.
             </p>
           </div>
         </div>

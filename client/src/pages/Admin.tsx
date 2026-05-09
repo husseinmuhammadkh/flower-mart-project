@@ -2,21 +2,25 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Product, User, Order } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
-  Trash2, Plus, Users, ShieldAlert, 
-  UserCog, ShoppingBag, Package, MessageCircle, CheckCircle, Loader2
+  Trash2, Plus, Users, ShieldAlert, Pencil,
+  UserCog, ShoppingBag, Package, MessageCircle, CheckCircle, Loader2, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+// 1. استيراد التكست اريا
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [tab, setTab] = useState<"products" | "users" | "orders">("products");
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // 1. حماية الصفحة والتحقق من الرتبة
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -33,7 +37,6 @@ export default function AdminPage() {
     }
   }, [setLocation]);
 
-  // 2. جلب البيانات
   const { data: products } = useQuery<Product[]>({ 
     queryKey: ["/api/products"],
     enabled: isAdmin === true 
@@ -47,12 +50,22 @@ export default function AdminPage() {
     enabled: isAdmin === true 
   });
 
-  // 3. العمليات (Mutations)
   const deleteProduct = useMutation({
     mutationFn: async (id: number) => await apiRequest("DELETE", `/api/products/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({ title: "تم الحذف", description: "تم حذف المنتج بنجاح" });
+    }
+  });
+
+  const updateProduct = useMutation({
+    mutationFn: async (updatedData: Product) => {
+      return await apiRequest("PATCH", `/api/products/${updatedData.id}`, updatedData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "تم التحديث", description: "تم تعديل المنتج بنجاح" });
+      setEditingProduct(null);
     }
   });
 
@@ -82,13 +95,7 @@ export default function AdminPage() {
     },
   });
 
-  if (isAdmin === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center font-['Cairo']">
-        <Loader2 className="animate-spin text-primary" size={40} />
-      </div>
-    );
-  }
+  if (isAdmin === null) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={40} /></div>;
 
   if (isAdmin === false) {
     return (
@@ -96,7 +103,6 @@ export default function AdminPage() {
         <div className="text-center p-8 bg-white rounded-3xl shadow-xl border max-w-sm">
           <ShieldAlert size={80} className="mx-auto text-destructive mb-4 animate-pulse" />
           <h1 className="text-3xl font-black">دخول ممنوع!</h1>
-          <p className="text-muted-foreground mt-2">عذراً، هذه المنطقة مخصصة للمديرين فقط.</p>
           <Button onClick={() => setLocation("/")} className="mt-6 w-full rounded-2xl">العودة للرئيسية</Button>
         </div>
       </div>
@@ -107,7 +113,6 @@ export default function AdminPage() {
     <div className="min-h-screen pt-28 pb-20 bg-muted/20 font-['Cairo'] text-right" dir="rtl">
       <div className="max-w-6xl mx-auto px-4">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
           <div>
             <h1 className="text-4xl font-black text-foreground flex items-center gap-3">
@@ -123,9 +128,8 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* 1. المنتجات */}
         {tab === "products" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+          <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold flex items-center gap-2"><ShoppingBag className="text-primary" /> المنتجات ({products?.length || 0})</h2>
               <Button onClick={() => setLocation("/add-product")} className="rounded-xl gap-2"><Plus size={18} /> إضافة منتج</Button>
@@ -136,22 +140,71 @@ export default function AdminPage() {
                   <img src={product.imageUrl} className="w-16 h-16 rounded-2xl object-cover" />
                   <div className="flex-1">
                     <h4 className="font-bold text-sm line-clamp-1">{product.name}</h4>
-                    <p className="text-primary font-bold text-xs">{product.price} ر.س</p>
+                    <p className="text-primary font-bold text-xs">{product.price} د.أ</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => { if(confirm("حذف المنتج؟")) deleteProduct.mutate(product.id) }}><Trash2 size={18} /></Button>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10" onClick={() => setEditingProduct(product)}>
+                      <Pencil size={18} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => { if(confirm("حذف المنتج؟")) deleteProduct.mutate(product.id) }}>
+                      <Trash2 size={18} />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* 2. الطلبات */}
+        {/* نافذة التعديل - مع إضافة حقل الوصف */}
+        {editingProduct && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+            <div className="bg-white p-6 rounded-[2rem] w-full max-w-md shadow-2xl">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black">تعديل المنتج</h3>
+                <Button variant="ghost" size="icon" onClick={() => setEditingProduct(null)}><X size={20}/></Button>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold px-1">اسم المنتج</label>
+                  <Input value={editingProduct.name} onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})} placeholder="اسم المنتج" className="rounded-xl" />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-xs font-bold px-1">السعر (د.أ)</label>
+                  <Input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({...editingProduct, price: Number(e.target.value)})} placeholder="السعر" className="rounded-xl" />
+                </div>
+
+                {/* 2. حقل الوصف الجديد */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold px-1">الوصف</label>
+                  <Textarea 
+                    value={editingProduct.description || ""} 
+                    onChange={(e) => setEditingProduct({...editingProduct, description: e.target.value})} 
+                    placeholder="وصف المنتج..." 
+                    className="rounded-xl min-h-[100px] resize-none" 
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold px-1">رابط الصورة</label>
+                  <Input value={editingProduct.imageUrl} onChange={(e) => setEditingProduct({...editingProduct, imageUrl: e.target.value})} placeholder="رابط الصورة" className="rounded-xl text-left" dir="ltr" />
+                </div>
+
+                <Button className="w-full rounded-xl py-6 text-lg font-bold mt-2" onClick={() => updateProduct.mutate(editingProduct)} disabled={updateProduct.isPending}>
+                  {updateProduct.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === "orders" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+          <div className="space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2"><Package className="text-primary" /> إدارة الطلبات ({orders?.length || 0})</h2>
             <div className="grid grid-cols-1 gap-4">
-              {orders?.map(order => (
-                <div key={order.id} className="bg-white p-6 rounded-[2rem] border border-border shadow-sm">
+              {orders?.slice().reverse().map(order => (
+                <div key={order.id} className="bg-white p-6 rounded-[2rem] border shadow-sm">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <span className="text-xs text-muted-foreground block">رقم الطلب: #{order.id}</span>
@@ -161,10 +214,10 @@ export default function AdminPage() {
                       {order.status === 'completed' ? 'تم التوصيل' : 'قيد الانتظار'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-muted/30 p-4 rounded-2xl mb-4 text-right">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-muted/30 p-4 rounded-2xl mb-4">
                     <p><strong>العنوان:</strong> {order.customerAddress}</p>
                     <p><strong>الهاتف:</strong> {order.customerPhone}</p>
-                    <p><strong>الإجمالي:</strong> {order.total} ر.س</p>
+                    <p><strong>الإجمالي:</strong> {order.total} د.أ</p>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" className="rounded-xl gap-2 border-green-500 text-green-600" onClick={() => window.open(`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`, '_blank')}>
@@ -178,14 +231,12 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
-              {orders?.length === 0 && <div className="text-center py-20 bg-white rounded-3xl border border-dashed">لا توجد طلبات بعد.</div>}
             </div>
           </div>
         )}
 
-        {/* 3. المستخدمين */}
         {tab === "users" && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+          <div className="space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2"><Users className="text-primary" /> الأعضاء ({users?.length || 0})</h2>
             <div className="bg-card rounded-3xl border shadow-sm overflow-hidden overflow-x-auto">
               <table className="w-full text-right text-sm">

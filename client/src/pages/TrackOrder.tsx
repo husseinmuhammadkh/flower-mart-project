@@ -59,7 +59,7 @@ export default function TrackOrder() {
             
             <div className="w-full bg-gray-50 p-4 rounded-lg text-right">
               <p><strong>الاسم:</strong> {order.customerName}</p>
-              <p><strong>الإجمالي:</strong> {order.total} ر.س</p>
+              <p><strong>الإجمالي:</strong> {order.total} د.أ</p>
               <p><strong>العنوان:</strong> {order.customerAddress}</p>
               <p><strong>رقم الجوال:</strong> {order.customerPhone}</p>            </div>
           </CardContent>

@@ -116,7 +116,7 @@ export default function Profile() {
         </div>
 
         <p className="text-center mt-8 text-muted-foreground text-sm">
-          جميع بياناتك محمية ومشفرة وفق معايير روزاليا
+          جميع بياناتك محمية ومشفرة وفق معايير بلانتو
         </p>
       </div>
     </div>

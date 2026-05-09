@@ -35,7 +35,7 @@ export function ProductCard({ product, index }: { product: Product; index: numbe
           <h3 className="text-xl font-bold text-foreground mb-1 hover:text-primary transition-colors cursor-pointer">{product.name}</h3>
         </Link>
         <div className="mt-auto flex items-center justify-between flex-row-reverse">
-          <span className="text-lg font-bold text-primary">{Number(product.price).toFixed(2)} ر.س</span>
+          <span className="text-lg font-bold text-primary">{Number(product.price).toFixed(2)} د.أ</span>
           <button
             onClick={handleAddToCart}
             disabled={!product.inStock || added}

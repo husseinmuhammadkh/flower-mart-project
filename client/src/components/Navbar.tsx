@@ -71,7 +71,7 @@ export function Navbar() {
           <Link href="/">
             <div className="flex items-center gap-2 cursor-pointer group">
               <span className="text-2xl font-black text-primary tracking-tighter transition-all group-hover:opacity-80">
-                ROSALIA
+                planto
               </span>
               <Flower2 className="text-primary group-hover:rotate-12 transition-transform" size={28} />
             </div>

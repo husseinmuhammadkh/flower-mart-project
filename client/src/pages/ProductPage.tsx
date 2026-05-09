@@ -107,7 +107,7 @@ export default function ProductPage() {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col justify-center">
           <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-4">{product.name}</h1>
           <div className="text-3xl font-bold text-primary mb-6 border-b pb-4">
-            {Number(product.price).toFixed(2)} <span className="text-lg">ر.س</span>
+            {Number(product.price).toFixed(2)} <span className="text-lg">د.أ</span>
           </div>
           <p className="text-lg text-muted-foreground leading-relaxed mb-8">{product.description}</p>
 

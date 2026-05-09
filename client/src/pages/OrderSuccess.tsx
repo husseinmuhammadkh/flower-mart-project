@@ -68,7 +68,7 @@ export default function OrderSuccess() {
             <div className="space-y-1 mt-3">
               <p className="text-sm text-gray-600 font-bold">الاسم: <span className="font-normal">{order.customerName}</span></p>
               <p className="text-sm text-gray-600 font-bold">العنوان: <span className="font-normal">{order.customerAddress}</span></p>
-              <p className="text-sm text-gray-600 font-bold">الإجمالي: <span className="font-normal text-green-600">{Number(order.total).toFixed(2)} ر.س</span></p>
+              <p className="text-sm text-gray-600 font-bold">الإجمالي: <span className="font-normal text-green-600">{Number(order.total).toFixed(2)} د.أ</span></p>
             </div>
           </div>
 

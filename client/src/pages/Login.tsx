@@ -65,7 +65,7 @@ export default function Login() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4 animate-bounce">
               <Flower2 size={32} />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">روزاليا</h1>
+            <h1 className="text-3xl font-bold text-foreground">بلانتو</h1>
             <p className="text-muted-foreground mt-2">سجل دخولك للمتابعة في المتجر</p>
           </div>
 

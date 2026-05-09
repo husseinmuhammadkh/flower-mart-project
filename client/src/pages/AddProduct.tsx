@@ -68,7 +68,7 @@ export default function AddProduct() {
               <input
                 required
                 type="number"
-                placeholder="السعر (ر.س)"
+                placeholder="السعر (د.أ)"
                 className="w-full pr-12 pl-4 py-3 bg-muted/50 border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               />

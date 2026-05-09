@@ -25,7 +25,6 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   getUser(id: number): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  // --- التعديل هنا: إضافة تعريف دوال المستخدمين ---
   deleteUser(id: number): Promise<void>;
   updateUserRole(id: number, role: string): Promise<User>;
   getReviewsByProduct(productId: number): Promise<Review[]>;
@@ -47,8 +46,13 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
+  // تحديث المنتج: يدعم تعديل أي حقل يصل من الفرونت إند (اسم، سعر، وصف، صورة)
   async updateProduct(id: number, data: Partial<Product>): Promise<Product> {
-    const [product] = await db.update(products).set(data).where(eq(products.id, id)).returning();
+    const [product] = await db
+      .update(products)
+      .set(data)
+      .where(eq(products.id, id))
+      .returning();
     return product;
   }
 
@@ -80,7 +84,6 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // --- التعديل هنا: تنفيذ دوال الحذف والتحديث ---
   async deleteUser(id: number): Promise<void> {
     await db.delete(users).where(eq(users.id, id));
   }
@@ -120,8 +123,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrders(): Promise<Order[]> {
-  return await db.select().from(orders); // أو حسب طريقة تعريفك للـ Database
-}
+    return await db.select().from(orders);
+  }
 
   async getOrder(id: number): Promise<Order | undefined> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
@@ -135,3 +138,4 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
+//137

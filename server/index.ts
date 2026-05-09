@@ -7,6 +7,7 @@ import session from "express-session";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 
+
 // إعادة دالة الـ log لمكانها الأصلي في index.ts
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -43,7 +44,7 @@ app.use(express.urlencoded({ extended: false }));
 // 1. إعداد الجلسات
 app.use(
   session({
-    secret: "rosalia-flower-shop-secret",
+    secret: "planto-flower-shop-secret",
     resave: false,
     saveUninitialized: false,
     cookie: {

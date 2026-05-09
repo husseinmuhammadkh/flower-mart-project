@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: 'hm2653601@gmail.com',
-    pass: process.env.EMAIL_PASS
+    pass: 'vanz ctjr cyup kvpo'
   },
   tls: {
     rejectUnauthorized: false
@@ -30,7 +30,7 @@ const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
 };
 
 export async function registerRoutes(app: Express, httpServer: Server): Promise<Server> {
-
+  
   // --- 1. نظام المستخدمين ---
   app.get("/api/user", async (req, res) => {
     if (!req.session.userId) return res.status(401).send();
@@ -119,6 +119,21 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
+  // مسار تعديل المنتج (PATCH) - تم التعديل ليعمل مع نظام isAdmin الخاص بك
+  app.patch("/api/products/:id", isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updatedProduct = await storage.updateProduct(id, req.body);
+      if (!updatedProduct) {
+        return res.status(404).json({ message: "المنتج غير موجود" });
+      }
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error("Update Error:", error);
+      res.status(500).json({ message: "فشل في تحديث المنتج" });
+    }
+  });
+
   app.delete("/api/products/:id", isAdmin, async (req, res) => {
     await storage.deleteProduct(Number(req.params.id));
     res.sendStatus(204);
@@ -141,8 +156,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
   });
 
   // --- 5. الطلبات ---
-
-  // إضافة المسار المفقود: جلب كل الطلبات للإدمن
   app.get("/api/orders", isAdmin, async (_req, res) => {
     try {
       const allOrders = await storage.getOrders();
@@ -177,19 +190,19 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
           <tr style="border-bottom: 1px solid #eee;">
             <td style="padding: 10px; text-align: right;">${product?.name || 'منتج'}</td>
             <td style="padding: 10px; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; text-align: left;">${(Number(product?.price || 0) * item.quantity)} ر.س</td>
+            <td style="padding: 10px; text-align: left;">${(Number(product?.price || 0) * item.quantity)} د.أ</td>
           </tr>
         `;
       }).join('');
 
       const mailOptions = {
-        from: '"متجر روزاليا 🌸" <hm2653601@gmail.com>',
+        from: '"بلانتو 🌸" <hm2653601@gmail.com>',
         to: order.customerEmail,
-        subject: `تأكيد طلبك رقم #${order.id} - متجر روزاليا 🌸`,
+        subject: `تأكيد طلبك رقم #${order.id} - بلانتو 🌸`,
         html: `
           <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #f0f0f0; border-radius: 20px; overflow: hidden; color: #333;">
             <div style="background: linear-gradient(135deg, #d41d6d 0%, #ff85a1 100%); padding: 30px; text-align: center; color: white;">
-              <h1 style="margin: 0; font-size: 24px;">شكراً لثقتك بمتجر روزاليا!</h1>
+              <h1 style="margin: 0; font-size: 24px;">شكراً لثقتك ببلانتو!</h1>
               <p style="margin: 10px 0 0; opacity: 0.9;">لقد استلمنا طلبك رقم #${order.id} بنجاح</p>
             </div>
             <div style="padding: 20px;">
@@ -207,7 +220,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
                 </tbody>
               </table>
               <div style="margin-top: 20px; background: #fff5f8; padding: 15px; border-radius: 12px; text-align: left;">
-                <p style="margin: 0; font-size: 18px;"><b>الإجمالي النهائي:</b> <span style="color: #d41d6d; font-weight: bold;">${order.total} ر.س</span></p>
+                <p style="margin: 0; font-size: 18px;"><b>الإجمالي النهائي:</b> <span style="color: #d41d6d; font-weight: bold;">${order.total} د.أ</span></p>
               </div>
               <h3 style="color: #d41d6d; margin-top: 30px;">بيانات التوصيل:</h3>
               <div style="background: #fafafa; padding: 15px; border-radius: 12px; font-size: 14px;">
@@ -220,24 +233,49 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         `
       };
 
-      await Promise.all([
-  transporter.sendMail(mailOptions),
-
-  transporter.sendMail({
-    from: '"متجر روزاليا 🌸" <hm2653601@gmail.com>',
-    to: "hm2653601@gmail.com",
-    subject: `طلب جديد رقم #${order.id}`,
-    html: `
-      <div dir="rtl">
-        <h2>طلب جديد 🌸</h2>
-        <p><b>الاسم:</b> ${order.customerName}</p>
-        <p><b>الجوال:</b> ${order.customerPhone}</p>
-        <p><b>العنوان:</b> ${order.customerAddress}</p>
-        <p><b>الإجمالي:</b> ${order.total} ر.س</p>
-      </div>
-    `
-  })
-]);
+      try {
+        await transporter.sendMail(mailOptions);
+        await transporter.sendMail({
+          from: '"بلانتو 🌸" <hm2653601@gmail.com>',
+          to: "hm2653601@gmail.com",
+          subject: `طلب جديد رقم #${order.id} - بلانتو 🌸`,
+          html: `
+            <div dir="rtl" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #f0f0f0; border-radius: 20px; overflow: hidden; color: #333;">
+              <div style="background: linear-gradient(135deg, #d41d6d 0%, #ff85a1 100%); padding: 30px; text-align: center; color: white;">
+                <h1 style="margin: 0;">طلب جديد 🌸</h1>
+                <p>رقم الطلب #${order.id}</p>
+              </div>
+              <div style="padding: 20px;">
+                <h3 style="color: #d41d6d;">بيانات العميل</h3>
+                <div style="background:#fafafa;padding:15px;border-radius:12px">
+                  <p><b>الاسم:</b> ${order.customerName}</p>
+                  <p><b>البريد:</b> ${order.customerEmail}</p>
+                  <p><b>الجوال:</b> ${order.customerPhone}</p>
+                  <p><b>العنوان:</b> ${order.customerAddress}</p>
+                </div>
+                <h3 style="color:#d41d6d;margin-top:20px">تفاصيل الطلب</h3>
+                <table style="width:100%;border-collapse:collapse">
+                  <thead>
+                    <tr style="background:#fdf2f8">
+                      <th style="padding:10px;text-align:right">المنتج</th>
+                      <th style="padding:10px;text-align:center">الكمية</th>
+                      <th style="padding:10px;text-align:left">السعر</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${orderItemsHtml}
+                  </tbody>
+                </table>
+                <div style="margin-top:20px;background:#fff5f8;padding:15px;border-radius:12px">
+                  <h3>الإجمالي : ${order.total} د.أ</h3>
+                </div>
+              </div>
+            </div>
+          `
+        });
+      } catch (e:any) {
+        console.error("Mail error:", e.message);
+      }
       res.status(201).json(order);
     } catch (err) {
       res.status(400).json({ message: "حدث خطأ أثناء معالجة الطلب" });
@@ -258,7 +296,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       };
 
       const mailOptions = {
-        from: '"متجر روزاليا 🌸" <hm2653601@gmail.com>',
+        from: '"بلانتو 🌸" <hm2653601@gmail.com>',
         to: updatedOrder.customerEmail,
         subject: `تحديث جديد لطلبك رقم #${updatedOrder.id}`,
         html: `
@@ -270,7 +308,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
               <p style="margin: 5px 0;">رقم الطلب: #${updatedOrder.id}</p>
               <p style="margin: 5px 0;">الحالة الحالية: ${status}</p>
             </div>
-            <p style="margin-top: 20px; font-size: 12px; color: #999;">شكراً لاختيارك متجر روزاليا</p>
+            <p style="margin-top: 20px; font-size: 12px; color: #999;">شكراً لاختيارك بلانتو</p>
           </div>
         `
       };
@@ -284,3 +322,4 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   return httpServer;
 }
+//366

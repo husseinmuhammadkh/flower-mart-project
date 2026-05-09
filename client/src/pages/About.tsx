@@ -20,9 +20,9 @@ export default function About() {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl font-black mb-6 text-foreground">قصة <span className="text-primary">روزاليا</span></h1>
+            <h1 className="text-4xl font-black mb-6 text-foreground">قصة <span className="text-primary">بلانتو</span></h1>
             <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-              بدأت رحلتنا في "روزاليا" من شغف عميق بالزهور وقدرتها السحرية على تغيير مزاج الإنسان ونقل مشاعره دون كلمات. نحن لسنا مجرد متجر زهور، بل نحن شركاء في تخليد لحظاتكم السعيدة.
+              بدأت رحلتنا في "بلانتو" من شغف عميق بالزهور وقدرتها السحرية على تغيير مزاج الإنسان ونقل مشاعره دون كلمات. نحن لسنا مجرد متجر زهور، بل نحن شركاء في تخليد لحظاتكم السعيدة.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
               منذ انطلاقتنا، وضعنا نصب أعيننا معايير الجودة العالية والتصاميم المبتكرة التي تجمع بين الفخامة الكلاسيكية واللمسات العصرية، لنهديكم تجربة بصرية وعطرية لا تُنسى.
@@ -36,7 +36,7 @@ export default function About() {
           >
             <img 
               src="https://images.unsplash.com/photo-1526047932273-341f2a7631f9?w=800" 
-              alt="Rosalia Flowers"
+              alt="planto Flowers"
               className="w-full h-[400px] object-cover"
             />
           </motion.div>

@@ -9,7 +9,7 @@ export function Footer() {
           
           {/* قسم عن المتجر */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-black text-primary">روزاليا</h3>
+            <h3 className="text-2xl font-black text-primary">بلانتو</h3>
             <p className="text-muted-foreground leading-relaxed">
               متجرك الأول للزهور والهدايا الفاخرة. نسعى دائمًا لنشر السعادة والجمال في كل مناسباتكم.
             </p>
@@ -40,7 +40,7 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={18} className="text-primary" />
-                <span>info@rosalia.com</span>
+                <span>info@planto.com</span>
               </li>
             </ul>
           </div>
@@ -69,7 +69,7 @@ export function Footer() {
         <hr className="my-10 border-border" />
         
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© 2026 متجر روزاليا. جميع الحقوق محفوظة.</p>
+          <p>© 2026 بلانتو. جميع الحقوق محفوظة.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:underline">سياسة الخصوصية</a>
             <a href="#" className="hover:underline">شروط الاستخدام</a>

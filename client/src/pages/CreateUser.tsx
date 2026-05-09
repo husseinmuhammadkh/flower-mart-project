@@ -98,7 +98,7 @@ export default function CreateUser() {
 
       toast({
         title: "تم بنجاح",
-        description: "أهلاً بك في روزاليا!"
+        description: "أهلاً بك في بلانتو!"
       });
 
       localStorage.setItem("currentUser", JSON.stringify(newUser));
@@ -129,7 +129,7 @@ export default function CreateUser() {
               <UserPlus className="text-primary" size={32} />
             </div>
             <h2 className="text-3xl font-bold text-foreground">إنشاء حساب جديد</h2>
-            <p className="text-muted-foreground mt-2">انضم إلى عالم روزاليا للزهور</p>
+            <p className="text-muted-foreground mt-2">انضم إلى عالم بلانتو للزهور</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

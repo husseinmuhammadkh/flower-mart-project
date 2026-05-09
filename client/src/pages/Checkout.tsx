@@ -215,7 +215,7 @@ export default function Checkout() {
                         </h4>
 
                         <p className="text-primary font-bold text-xs">
-                          {Number(item.price).toFixed(2)} ر.س
+                          {Number(item.price).toFixed(2)} د.أ
                         </p>
                       </div>
 
@@ -239,7 +239,7 @@ export default function Checkout() {
                 <div className="flex justify-between font-black text-xl">
                   <span>الإجمالي</span>
                   <span className="text-primary">
-                    {totalAmount.toFixed(2)} ر.س
+                    {totalAmount.toFixed(2)} د.أ
                   </span>
                 </div>
               </div>
