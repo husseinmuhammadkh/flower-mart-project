@@ -24,7 +24,6 @@ declare module "express-session" {
 
 const app = express();
 app.set('trust proxy', 1);
-
 // --- نظام الحماية المعدل (بدون حجب Vite) ---
 app.use(helmet({
   contentSecurityPolicy: false, // لضمان عمل الواجهة والصور

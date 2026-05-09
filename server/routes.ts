@@ -8,17 +8,16 @@ import bcrypt from "bcryptjs";
 
 // 1. إعداد مرسل البريد
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // استخدم false للبورت 587
+  secure: false, // تم تغييرها من true إلى false لتناسب بورت 587
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: 'hm2653601@gmail.com',
+    pass: 'vanz ctjr cyup kvpo'
   },
   tls: {
     rejectUnauthorized: false,
-    // هذا السطر يحل مشكلة ENETUNREACH في بعض بيئات الاستضافة
-    family: 4 
+    family: 4 // هذا السطر ضروري جداً لحل مشكلة ENETUNREACH على سيرفرات Render
   }
 });
 
