@@ -10,17 +10,17 @@ import bcrypt from "bcryptjs";
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // تم تغييرها من true إلى false لتناسب بورت 587
+  secure: false, 
   auth: {
-    user: 'hm2653601@gmail.com',
-    pass: 'vanz ctjr cyup kvpo'
+    // تأكد أن الكود يقرأ من الأنويرومنت هكذا:
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS
   },
   tls: {
     rejectUnauthorized: false,
-    family: 4 // هذا السطر ضروري جداً لحل مشكلة ENETUNREACH على سيرفرات Render
+    family: 4 
   }
 });
-
 // --- وظائف الحماية (Middleware) ---
 const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) return res.status(401).json({ message: "غير مصرح لك" });
