@@ -8,19 +8,16 @@ import bcrypt from "bcryptjs";
 
 // 1. إعداد مرسل البريد
 const transporter = nodemailer.createTransport({
+  service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, 
+  port: 465,
+  secure: true,
   auth: {
-    // تأكد أن الكود يقرأ من الأنويرومنت هكذا:
-    user: process.env.EMAIL_USER, 
+    user: 'hm2653601@gmail.com',
     pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    rejectUnauthorized: false,
-    family: 4 
   }
 });
+
 // --- وظائف الحماية (Middleware) ---
 const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) return res.status(401).json({ message: "غير مصرح لك" });
@@ -234,8 +231,9 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       };
 
       try {
-        await transporter.sendMail(mailOptions);
-        await transporter.sendMail({
+        transporter.sendMail(mailOptions)
+  .catch(e => console.error("Client mail error:", e.message));
+        transporter.sendMail({
           from: '"بلانتو 🌸" <hm2653601@gmail.com>',
           to: "hm2653601@gmail.com",
           subject: `طلب جديد رقم #${order.id} - بلانتو 🌸`,
