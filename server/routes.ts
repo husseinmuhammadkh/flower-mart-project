@@ -232,7 +232,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
       try {
         transporter.sendMail(mailOptions)
-  .catch(e => console.error("Client mail error:", e.message));
+  .catch(e => {
+  console.error("CLIENT MAIL ERROR:");
+  console.error(e);
+});
         transporter.sendMail({
           from: '"بلانتو 🌸" <hm2653601@gmail.com>',
           to: "hm2653601@gmail.com",
@@ -311,7 +314,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         `
       };
 
-      transporter.sendMail(mailOptions).catch(e => console.error("Update mail error:", e));
+      transporter.sendMail(mailOptions).catch(e => {
+  console.error("UPDATE MAIL ERROR:");
+  console.error(e);
+});
       res.json(updatedOrder);
     } catch (err) {
       res.status(500).json({ message: "فشل في تحديث حالة الطلب" });
