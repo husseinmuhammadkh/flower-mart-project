@@ -5,16 +5,24 @@ import { z } from "zod";
 import { insertUserSchema, insertReviewSchema, checkoutSchema, insertProductSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+dotenv.config();
 
+import nodemailer from "nodemailer";
 // 1. إعداد مرسل البريد
 // 1. إعداد مرسل البريد (نسخة مصححة لـ Render)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: 'hm2653601@gmail.com',
+  port: 587,
+  secure: false,
 
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS
   },
+
+
+
 });
 transporter.verify((error, success) => {
   if (error) {
