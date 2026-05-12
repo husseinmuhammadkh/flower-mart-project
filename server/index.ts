@@ -6,8 +6,6 @@ import { createServer } from "http";
 import session from "express-session";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import dotenv from "dotenv";
-dotenv.config();
 
 
 // إعادة دالة الـ log لمكانها الأصلي في index.ts
