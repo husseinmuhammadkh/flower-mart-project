@@ -11,15 +11,17 @@ import bcrypt from "bcryptjs";
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // يجب أن تكون false مع بورت 587
+  secure: false,
+
   auth: {
-    // استخدمنا EMAIL_USER بدلاً من كتابة الإيميل يدوياً لضمان المرونة
-    user: process.env.EMAIL_USER || 'hm2653601@gmail.com', 
+    user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
+
+  family: 4,
+
   tls: {
-    rejectUnauthorized: false,
-    family: 4 // هذا السطر هو "البطل" اللي بيحل مشكلة الـ Timeout في Render
+    rejectUnauthorized: false
   }
 });
 
