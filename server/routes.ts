@@ -11,18 +11,18 @@ import bcrypt from "bcryptjs";
 // 1. إعداد مرسل البريد (نسخة مصححة لـ Render)
 console.log("EMAIL_USER =", process.env.EMAIL_USER);
 console.log("EMAIL_PASS =", process.env.EMAIL_PASS);
+// إعداد مرسل البريد المطور لبيئة Render
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // يجب أن تكون false لبورت 587
+  secure: false, 
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    pass: process.env.EMAIL_PASS, // سيعمل سواء بفراغات أو بدون، لكن الأفضل بدون
   },
   tls: {
     rejectUnauthorized: false,
-    // السطر القادم هو الحل السحري لخطأ ENETUNREACH
-    family: 4 
+    family: 4 // هذا السطر ضروري جداً لبيئة Render
   }
 });
 
