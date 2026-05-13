@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -8,18 +10,16 @@ import bcrypt from "bcryptjs";
 // 1. إعداد مرسل البريد
 // 1. إعداد مرسل البريد (نسخة مصححة لـ Render)
 const transporter = nodemailer.createTransport({
-  host: 'hm2653601@gmail.com',
+  host: "smtp.gmail.com",
   port: 587,
   secure: false,
 
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    pass: process.env.EMAIL_PASS,
   },
-
-
-
 });
+
 transporter.verify((error, success) => {
   if (error) {
     console.log("EMAIL ERROR:", error);
