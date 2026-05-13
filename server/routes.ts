@@ -9,18 +9,20 @@ import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 // 1. إعداد مرسل البريد
 // 1. إعداد مرسل البريد (نسخة مصححة لـ Render)
+console.log("EMAIL_USER =", process.env.EMAIL_USER);
+console.log("EMAIL_PASS =", process.env.EMAIL_PASS);
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
+  host: 'smtp.gmail.com',
   port: 587,
-  secure: false,
-
+  secure: false, // يجب أن تكون false لبورت 587
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-
   tls: {
-    family: 4
+    rejectUnauthorized: false,
+    // السطر القادم هو الحل السحري لخطأ ENETUNREACH
+    family: 4 
   }
 });
 

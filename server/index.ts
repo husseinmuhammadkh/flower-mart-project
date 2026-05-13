@@ -25,10 +25,12 @@ declare module "express-session" {
 }
 
 const app = express();
-app.set('trust proxy', 1);
-// --- نظام الحماية المعدل (بدون حجب Vite) ---
+
+// تأكد أن هذا السطر هو أول شيء بعد تعريف الـ app
+app.set('trust proxy', 1); 
+
 app.use(helmet({
-  contentSecurityPolicy: false, // لضمان عمل الواجهة والصور
+  contentSecurityPolicy: false,
 }));
 
 const limiter = rateLimit({
