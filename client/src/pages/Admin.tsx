@@ -1,16 +1,17 @@
+// Admin.tsx
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Product, User, Order } from "@shared/schema";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   Trash2, Plus, Users, ShieldAlert, Pencil,
-  UserCog, ShoppingBag, Package, MessageCircle, CheckCircle, Loader2, X
+  UserCog, ShoppingBag, Package, MessageCircle, CheckCircle, Loader2, X,
+  User as UserIcon, Phone, MapPin, Mail, DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-// 1. استيراد التكست اريا
 import { Textarea } from "@/components/ui/textarea";
 
 export default function AdminPage() {
@@ -156,7 +157,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* نافذة التعديل - مع إضافة حقل الوصف */}
+        {/* نافذة التعديل */}
         {editingProduct && (
           <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
             <div className="bg-white p-6 rounded-[2rem] w-full max-w-md shadow-2xl">
@@ -175,7 +176,6 @@ export default function AdminPage() {
                   <Input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({...editingProduct, price: Number(e.target.value)})} placeholder="السعر" className="rounded-xl" />
                 </div>
 
-                {/* 2. حقل الوصف الجديد */}
                 <div className="space-y-1">
                   <label className="text-xs font-bold px-1">الوصف</label>
                   <Textarea 
@@ -202,35 +202,148 @@ export default function AdminPage() {
         {tab === "orders" && (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2"><Package className="text-primary" /> إدارة الطلبات ({orders?.length || 0})</h2>
-            <div className="grid grid-cols-1 gap-4">
-              {orders?.slice().reverse().map(order => (
-                <div key={order.id} className="bg-white p-6 rounded-[2rem] border shadow-sm">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <span className="text-xs text-muted-foreground block">رقم الطلب: #{order.id}</span>
-                      <h3 className="font-bold text-lg">{order.customerName}</h3>
+            <div className="grid grid-cols-1 gap-6">
+              {orders?.slice().reverse().map(order => {
+                // فحص الحقل الفعلي المخزن بالداتابيس (إما items أو cart أو products) لمنع الـ undefined
+                const rawData = (order as any).cart || (order as any).products || order.items;
+                
+                let orderItems: any[] = [];
+                try {
+                  if (typeof rawData === 'string') {
+                    orderItems = JSON.parse(rawData);
+                  } else if (Array.isArray(rawData)) {
+                    orderItems = rawData;
+                  }
+                } catch (e) {
+                  orderItems = [];
+                }
+
+                return (
+                  <div key={order.id} className="bg-white p-6 md:p-8 rounded-[2rem] border shadow-sm space-y-6">
+                    
+                    {/* هيدر الكارد: الرقم والحالة */}
+                    <div className="flex justify-between items-center border-b pb-4">
+                      <div>
+                        <span className="text-xs text-muted-foreground block font-bold">رقم الطلب</span>
+                        <span className="text-xl font-black text-slate-800">#{order.id}</span>
+                      </div>
+                      <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {order.status === 'completed' ? 'تم التوصيل' : 'قيد الانتظار'}
+                      </span>
                     </div>
-                    <span className={`px-4 py-1 rounded-full text-xs font-bold ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {order.status === 'completed' ? 'تم التوصيل' : 'قيد الانتظار'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm bg-muted/30 p-4 rounded-2xl mb-4">
-                    <p><strong>العنوان:</strong> {order.customerAddress}</p>
-                    <p><strong>الهاتف:</strong> {order.customerPhone}</p>
-                    <p><strong>الإجمالي:</strong> {order.total} د.أ</p>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" className="rounded-xl gap-2 border-green-500 text-green-600" onClick={() => window.open(`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`, '_blank')}>
-                      <MessageCircle size={18} /> واتساب
-                    </Button>
-                    {order.status !== 'completed' && (
-                      <Button className="rounded-xl gap-2" onClick={() => updateOrderStatus.mutate({ id: order.id, status: 'completed' })}>
-                        <CheckCircle size={18} /> اكتمل الطلب
-                      </Button>
+
+                    {/* شبكة معلومات العميل الكاملة */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-muted/30 p-5 rounded-2xl text-sm">
+                      <div className="flex items-center gap-2">
+                        <UserIcon className="text-primary" size={18} />
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">الاسم</span>
+                          <strong className="text-slate-700">{order.customerName}</strong>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Phone className="text-primary" size={18} />
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">رقم الهاتف</span>
+                          <strong className="text-slate-700" dir="ltr">{order.customerPhone}</strong>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <MapPin className="text-primary" size={18} />
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">العنوان</span>
+                          <strong className="text-slate-700">{order.customerAddress}</strong>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Mail className="text-primary" size={18} />
+                        <div>
+                          <span className="text-[10px] text-muted-foreground block">البريد الإلكتروني</span>
+                          <strong className="text-slate-700 break-all">{order.customerEmail}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* عرض تفاصيل المنتجات داخل الطلب */}
+                    {orderItems && orderItems.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-bold text-sm text-slate-800">المنتجات المطلوبة:</h4>
+                        <div className="border rounded-2xl overflow-hidden divide-y">
+                          {orderItems.map((item: any, idx: number) => {
+                            const currentId = item?.productId || item?.id;
+                            const matchedProduct = products?.find(p => Number(p.id) === Number(currentId));
+                            
+                            const productName = matchedProduct?.name || item?.productName || item?.name || `منتج رقم #${currentId}`;
+                            const productImg = matchedProduct?.imageUrl || matchedProduct?.image_url || item?.imageUrl || item?.image_url;
+
+                            return (
+                              <div key={idx} className="flex items-center justify-between p-4 bg-slate-50/50 text-xs">
+                                <div className="flex items-center gap-4">
+                                  <img 
+                                    src={productImg || "https://images.unsplash.com/photo-1512211878902-601a6072dd33?w=100"} 
+                                    className="w-14 h-14 object-cover rounded-xl border" 
+                                    alt="" 
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1512211878902-601a6072dd33?w=100";
+                                    }}
+                                  />
+                                  <div>
+                                    <h5 className="font-bold text-sm text-slate-800">{productName}</h5>
+                                    {(item?.selectedSize || item?.size) && (
+                                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium mt-1 inline-block">
+                                        الحجم: {
+                                          (item.selectedSize === 'small' || item.size === 'small') ? 'صغير' : 
+                                          (item.selectedSize === 'medium' || item.size === 'medium') ? 'وسط' : 'كبير'
+                                        }
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-left font-bold text-slate-600 text-sm">
+                                  <span>الكمية: {item?.quantity || 1}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     )}
+
+                    {/* فوتر الكارد: السعر النهائي والإجراءات */}
+                    <div className="flex flex-col sm:flex-row justify-between items-center pt-2 gap-4 border-t border-dashed">
+                      <div className="flex items-center gap-1 text-primary">
+                        <span className="text-xs font-bold">الإجمالي النهائي:</span>
+                        <span className="text-2xl font-black">{order.total} د.أ</span>
+                      </div>
+
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button 
+                          variant="outline" 
+                          className="rounded-xl gap-2 border-green-500 text-green-600 flex-1 sm:flex-none" 
+                          onClick={() => {
+                            let phone = order.customerPhone.replace(/\D/g, '');
+                            if (phone.startsWith('0')) {
+                              phone = '962' + phone.substring(1);
+                            }
+                            window.open(`https://wa.me/${phone}`, '_blank');
+                          }}
+                        >
+                          <MessageCircle size={18} /> واتساب
+                        </Button>
+                        {order.status !== 'completed' && (
+                          <Button className="rounded-xl gap-2 flex-1 sm:flex-none" onClick={() => updateOrderStatus.mutate({ id: order.id, status: 'completed' })}>
+                            <CheckCircle size={18} /> اكتمل الطلب
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

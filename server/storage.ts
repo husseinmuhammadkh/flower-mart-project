@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { 
   products, orders, orderItems, users, reviews,
   type Product,
@@ -123,8 +124,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrders(): Promise<Order[]> {
-    return await db.select().from(orders);
-  }
+  // 1. جلب جميع الطلبات الأساسية
+  const allOrders = await db.select().from(orders);
+  
+  // 2. دمج المنتجات الخاصة بكل طلب تلقائياً
+  const ordersWithItems = await Promise.all(
+    allOrders.map(async (order) => {
+      const items = await db
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.orderId, order.id));
+        
+      return {
+        ...order,
+        items: items // إرفاق مصفوفة المنتجات هنا لتقرأها لوحة التحكم
+      };
+    })
+  );
+  
+  return ordersWithItems as any;
+}
 
   async getOrder(id: number): Promise<Order | undefined> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));
@@ -138,4 +157,3 @@ export class DatabaseStorage implements IStorage {
 }
 
 export const storage = new DatabaseStorage();
-//137
