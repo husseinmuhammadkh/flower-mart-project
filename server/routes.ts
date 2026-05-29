@@ -132,7 +132,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  // مسار تعديل المنتج (PATCH) - تم التعديل ليعمل مع نظام isAdmin الخاص بك
+  // مسار تعديل المنتج (PATCH)
   app.patch("/api/products/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -199,11 +199,35 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       
       const orderItemsHtml = validatedData.items.map(item => {
         const product = allProducts.find(p => p.id === item.productId);
+        
+        // تحويل مسمى الحجم إلى لغة عربية مفهومة في فاتورة الإيميل
+        let sizeName = "وسط (M)";
+        if (item.selectedSize === "small") sizeName = "صغير (S)";
+        if (item.selectedSize === "medium") sizeName = "وسط (M)";
+        if (item.selectedSize === "large") sizeName = "كبير (L)";
+        if (item.selectedSize === "xlarge") sizeName = "كبير جداً (XL)";
+
+        // تجهيز نص الملاحظات لو العميل كتب شيئاً
+        const notesHtml = item.customNotes 
+          ? `<div style="color: #666; font-size: 11px; margin-top: 4px; background: #f5f5f5; padding: 4px 8px; border-radius: 6px;"><b>إضافات وملاحظات العميل:</b> ${item.customNotes}</div>` 
+          : '';
+
+        // حساب السعر الفعلي بناءً على الحجم المختار إن وجد، وإلا نعتمد السعر الافتراضي
+        let itemPrice = Number(product?.price || 0);
+        if (item.selectedSize === "small" && product?.priceS && Number(product.priceS) > 0) itemPrice = Number(product.priceS);
+        if (item.selectedSize === "medium" && product?.priceM && Number(product.priceM) > 0) itemPrice = Number(product.priceM);
+        if (item.selectedSize === "large" && product?.priceL && Number(product.priceL) > 0) itemPrice = Number(product.priceL);
+        if (item.selectedSize === "xlarge" && product?.priceXL && Number(product.priceXL) > 0) itemPrice = Number(product.priceXL);
+
         return `
           <tr style="border-bottom: 1px solid #eee;">
-            <td style="padding: 10px; text-align: right;">${product?.name || 'منتج'}</td>
+            <td style="padding: 10px; text-align: right;">
+              <span style="font-weight: bold;">${product?.name || 'منتج'}</span>
+              <div style="color: #d41d6d; font-size: 11px; margin-top: 2px;">الحجم: ${sizeName}</div>
+              ${notesHtml}
+            </td>
             <td style="padding: 10px; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; text-align: left;">${(Number(product?.price || 0) * item.quantity)} د.أ</td>
+            <td style="padding: 10px; text-align: left;">${(itemPrice * item.quantity)} د.أ</td>
           </tr>
         `;
       }).join('');
@@ -247,11 +271,10 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       };
 
       try {
-        transporter.sendMail(mailOptions)
-  .catch(e => {
-  console.error("CLIENT MAIL ERROR:");
-  console.error(e);
-});
+        transporter.sendMail(mailOptions).catch(e => {
+          console.error("CLIENT MAIL ERROR:", e);
+        });
+        
         transporter.sendMail({
           from: '"بلانتو 🌸" <hm2653601@gmail.com>',
           to: "hm2653601@gmail.com",
@@ -289,7 +312,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
               </div>
             </div>
           `
-        });
+        }).catch(e => console.error("ADMIN MAIL ERROR:", e));
       } catch (e:any) {
         console.error("Mail error:", e.message);
       }
@@ -331,9 +354,8 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       };
 
       transporter.sendMail(mailOptions).catch(e => {
-  console.error("UPDATE MAIL ERROR:");
-  console.error(e);
-});
+        console.error("UPDATE MAIL ERROR:", e);
+      });
       res.json(updatedOrder);
     } catch (err) {
       res.status(500).json({ message: "فشل في تحديث حالة الطلب" });
@@ -342,4 +364,3 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
 
   return httpServer;
 }
-//366

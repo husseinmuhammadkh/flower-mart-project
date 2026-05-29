@@ -1,3 +1,4 @@
+// storage.ts
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { 
@@ -10,7 +11,7 @@ import {
   type Review,
   type InsertReview
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -109,41 +110,51 @@ export class DatabaseStorage implements IStorage {
       for (const item of checkoutData.items) {
         const [product] = await tx.select().from(products).where(eq(products.id, item.productId));
         if (product) {
-          total += Number(product.price) * item.quantity;
+          // تحديد السعر بناءً على المقاس المختار وحسب أسعار الأحجام المتوفرة
+          let finalPrice = Number(product.price);
+          if (item.selectedSize === "small" && Number(product.priceS) > 0) finalPrice = Number(product.priceS);
+          if (item.selectedSize === "medium" && Number(product.priceM) > 0) finalPrice = Number(product.priceM);
+          if (item.selectedSize === "large" && Number(product.priceL) > 0) finalPrice = Number(product.priceL);
+          if (item.selectedSize === "xlarge" && Number(product.priceXL) > 0) finalPrice = Number(product.priceXL);
+
+          total += finalPrice * item.quantity;
+
           await tx.insert(orderItems).values({
             orderId: order.id,
             productId: product.id,
             quantity: item.quantity,
-            priceAtTime: product.price.toString()
+            priceAtTime: finalPrice.toFixed(2),
+            selectedSize: item.selectedSize || "medium",
+            customNotes: item.customNotes || ""
           });
         }
       }
-      const [updatedOrder] = await tx.update(orders).set({ total: total.toString() }).where(eq(orders.id, order.id)).returning();
+      const [updatedOrder] = await tx.update(orders).set({ total: total.toFixed(2) }).where(eq(orders.id, order.id)).returning();
       return updatedOrder;
     });
   }
 
   async getOrders(): Promise<Order[]> {
-  // 1. جلب جميع الطلبات الأساسية
-  const allOrders = await db.select().from(orders);
-  
-  // 2. دمج المنتجات الخاصة بكل طلب تلقائياً
-  const ordersWithItems = await Promise.all(
-    allOrders.map(async (order) => {
-      const items = await db
-        .select()
-        .from(orderItems)
-        .where(eq(orderItems.orderId, order.id));
-        
-      return {
-        ...order,
-        items: items // إرفاق مصفوفة المنتجات هنا لتقرأها لوحة التحكم
-      };
-    })
-  );
-  
-  return ordersWithItems as any;
-}
+    // 1. جلب جميع الطلبات الأساسية
+    const allOrders = await db.select().from(orders);
+    
+    // 2. دمج المنتجات الخاصة بكل طلب تلقائياً
+    const ordersWithItems = await Promise.all(
+      allOrders.map(async (order) => {
+        const items = await db
+          .select()
+          .from(orderItems)
+          .where(eq(orderItems.orderId, order.id));
+          
+        return {
+          ...order,
+          items: items // إرفاق مصفوفة المنتجات هنا لتقرأها لوحة التحكم
+        };
+      })
+    );
+    
+    return ordersWithItems as any;
+  }
 
   async getOrder(id: number): Promise<Order | undefined> {
     const [order] = await db.select().from(orders).where(eq(orders.id, id));

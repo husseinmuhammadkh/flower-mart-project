@@ -10,6 +10,10 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  priceS: numeric("price_s", { precision: 10, scale: 2 }).default("0.00").notNull(), // سعر حجم S
+  priceM: numeric("price_m", { precision: 10, scale: 2 }).default("0.00").notNull(), // سعر حجم M
+  priceL: numeric("price_l", { precision: 10, scale: 2 }).default("0.00").notNull(), // سعر حجم L
+  priceXL: numeric("price_xl", { precision: 10, scale: 2 }).default("0.00").notNull(), // سعر حجم XL
   imageUrl: text("image_url").notNull(),
   category: text("category").notNull(),
   inStock: boolean("is_in_stock").default(true).notNull()
@@ -54,7 +58,9 @@ export const orderItems = pgTable("order_items", {
   orderId: integer("order_id").notNull(),
   productId: integer("product_id").notNull(),
   quantity: integer("quantity").notNull(),
-  priceAtTime: numeric("price_at_time", { precision: 10, scale: 2 }).notNull()
+  priceAtTime: numeric("price_at_time", { precision: 10, scale: 2 }).notNull(),
+  selectedSize: text("selected_size").default("medium").notNull(), // تخزين المقاس المطلوب (s, m, l, xl)
+  customNotes: text("custom_notes").default("").notNull() // حقل كتابة الإضافات أو التعديلات من الزبون
 });
 
 // العلاقات
@@ -125,8 +131,11 @@ export const checkoutSchema = z.object({
   customerAddress: z.string().min(5, "العنوان مطلوب"),
   items: z.array(z.object({
     productId: z.number(),
-    quantity: z.number().min(1)
+    quantity: z.number().min(1),
+    selectedSize: z.string().default("medium"), // استقبال الحجم من الفرونت إند
+    customNotes: z.string().default("") // استقبال ملاحظات التعديل والإضافات
   })).min(1, "السلة فارغة")
 });
 
 export type CheckoutRequest = z.infer<typeof checkoutSchema>;
+// second one 141

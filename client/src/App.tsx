@@ -1,3 +1,4 @@
+// App.tsx
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -48,9 +49,9 @@ function Router() {
           <Route path="/track-order" component={TrackOrder} />
           <Route path="/order/:id" component={OrderSuccess} />
           
-          {/* مسارات الإدارة المحمية */}
+          {/* مسارات الإدارة المحمية - تم التعديل هنا ليتطابق مع الأزرار */}
           <AdminRoute path="/admin" component={AdminPage} />
-          <AdminRoute path="/add-product" component={AddProduct} />
+          <AdminRoute path="/admin/add-product" component={AddProduct} />
 
           <Route component={NotFound} />
         </Switch>

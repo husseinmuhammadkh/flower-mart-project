@@ -9,7 +9,7 @@ export function CartDrawer() {
 
   const handleCheckout = () => {
     setIsOpen(false);
-    setLocation("/checkout");
+    setLocation(\"/checkout\");
   };
 
   return (
@@ -35,77 +35,103 @@ export function CartDrawer() {
             dir="rtl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border/50 bg-white/50">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/10 p-2 rounded-full text-primary">
-                  <ShoppingBag size={20} />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">سلة المشتريات</h2>
+            <div className="flex items-center justify-between p-6 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="text-primary" size={24} />
+                <h2 className="text-xl font-bold font-['Cairo']">سلة التسوق</h2>
+                <span className="bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs font-bold">
+                  {items.reduce((acc, item) => acc + item.quantity, 0)}
+                </span>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-full hover:bg-muted text-muted-foreground transition-colors"
+                className="p-2 hover:bg-accent rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {/* Content / Items List */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 font-['Cairo']">
               {items.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 text-muted-foreground">
-                  <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <ShoppingBag size={40} className="text-muted-foreground/50" />
+                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground pb-12">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                    <ShoppingBag size={30} className="opacity-40" />
                   </div>
-                  <p className="text-lg font-medium">سلتك فارغة</p>
-                  <p className="text-sm">لم تقم بإضافة أي ورود إلى سلتك بعد.</p>
-                  <button 
+                  <p className="text-lg font-medium mb-1">سلتك فارغة حالياً</p>
+                  <p className="text-sm opacity-80 mb-6">ابدأ بإضافة بعض الورود الجميلة لتظهر هنا</p>
+                  <button
                     onClick={() => setIsOpen(false)}
-                    className="mt-4 px-6 py-2 rounded-full border-2 border-primary text-primary font-medium hover:bg-primary hover:text-white transition-all"
+                    className="text-primary font-bold hover:underline"
                   >
-                    تصفح الورود
+                    تصفح المتجر الآن
                   </button>
                 </div>
               ) : (
-                items.map((item) => (
-                  <motion.div 
+                items.map((item, index) => (
+                  <motion.div
                     layout
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    key={item.id} 
-                    className="flex gap-4 bg-white p-3 rounded-2xl shadow-sm border border-border/30"
+                    exit={{ opacity: 0, x: 50 }}
+                    key={`${item.id}-${item.selectedSize}-${index}`}
+                    className="flex gap-4 p-4 rounded-xl border border-border/60 bg-card hover:border-border transition-colors relative group"
                   >
-                    <div className="w-24 h-24 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted shrink-0">
                       <img
                         src={item.imageUrl}
                         alt={item.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="flex-1 flex flex-col justify-between py-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-semibold text-foreground line-clamp-1">{item.name}</h3>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                      <div className="text-primary font-bold">{Number(item.price).toFixed(2)} د.أ</div>
-                      
-                      <div className="flex items-center gap-3 mt-2">
-                        <div className="flex items-center bg-muted/50 rounded-lg p-1">
+
+                    <div className="flex-1 flex flex-col justify-between min-w-0">
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-bold text-foreground text-sm sm:text-base truncate">
+                            {item.name}
+                          </h3>
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            onClick={() => removeItem(item.id, item.selectedSize)}
+                            className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors shrink-0 md:opacity-0 group-hover:opacity-100"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+
+                        {/* عرض المقاس المختار باللغة العربية */}
+                        <div className="text-xs text-primary font-medium mt-0.5">
+                          الحجم: {
+                            item.selectedSize === "small" ? "صغير (S)" :
+                            item.selectedSize === "medium" ? "وسط (M)" :
+                            item.selectedSize === "large" ? "كبير (L)" : "كبير جداً (XL)"
+                          }
+                        </div>
+
+                        {/* عرض ملاحظات وإضافات العميل المكتوبة */}
+                        {item.customNotes && (
+                          <div className="text-[11px] text-slate-500 bg-slate-50 border border-slate-100 p-1.5 px-2.5 rounded-lg mt-1 break-words leading-relaxed">
+                            <span className="font-bold text-slate-600 ml-1">ملاحظتك:</span> 
+                            {item.customNotes}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="font-bold text-sm text-foreground">
+                          {(Number(item.price) * item.quantity).toFixed(2)} د.أ
+                        </span>
+
+                        <div className="flex items-center bg-muted/60 rounded-lg p-0.5 border border-border/20">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.selectedSize, item.quantity - 1)}
                             className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition-all text-foreground"
                           >
                             <Minus size={14} />
                           </button>
-                          <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                          <span className="w-8 text-center text-xs font-bold">{item.quantity}</span>
                           <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, item.selectedSize, item.quantity + 1)}
                             className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm transition-all text-foreground"
                           >
                             <Plus size={14} />
@@ -120,7 +146,7 @@ export function CartDrawer() {
 
             {/* Footer */}
             {items.length > 0 && (
-              <div className="border-t border-border/50 p-6 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.03)]">
+              <div className="border-t border-border/50 p-6 bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.03)] font-['Cairo']">
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-muted-foreground font-medium">المجموع الإجمالي</span>
                   <span className="text-2xl font-bold text-foreground">

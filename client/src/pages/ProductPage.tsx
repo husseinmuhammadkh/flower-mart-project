@@ -22,6 +22,10 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [userRating, setUserRating] = useState(5);
   const [comment, setComment] = useState("");
+  
+  // الحقول الجديدة للأحجام والملاحظات
+  const [selectedSize, setSelectedSize] = useState<"small" | "medium" | "large" | "xlarge">("medium");
+  const [customNotes, setCustomNotes] = useState("");
 
   const productId = id ? Number(id) : null;
 
@@ -90,6 +94,16 @@ export default function ProductPage() {
     </div>
   );
 
+  // حساب السعر الحالي بناءً على الحجم المختار
+  let displayPrice = Number(product.price);
+  if (selectedSize === "small" && (product as any).priceS && Number((product as any).priceS) > 0) displayPrice = Number((product as any).priceS);
+  if (selectedSize === "medium" && (product as any).priceM && Number((product as any).priceM) > 0) displayPrice = Number((product as any).priceM);
+  if (selectedSize === "large" && (product as any).priceL && Number((product as any).priceL) > 0) displayPrice = Number((product as any).priceL);
+  if (selectedSize === "xlarge" && (product as any).priceXL && Number((product as any).priceXL) > 0) displayPrice = Number((product as any).priceXL);
+
+  // الحساب الإجمالي الصحيح (السعر × الكمية المستهدفة)
+  const totalPrice = displayPrice * quantity;
+
   return (
     <div className="min-h-screen pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-['Cairo'] text-right" dir="rtl">
       <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary mb-8 font-bold">
@@ -107,21 +121,110 @@ export default function ProductPage() {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col justify-center">
           <h1 className="text-4xl lg:text-5xl font-black text-foreground mb-4">{product.name}</h1>
           <div className="text-3xl font-bold text-primary mb-6 border-b pb-4">
-            {Number(product.price).toFixed(2)} <span className="text-lg">د.أ</span>
+            {displayPrice.toFixed(2)} <span className="text-lg">د.أ</span>
           </div>
           <p className="text-lg text-muted-foreground leading-relaxed mb-8">{product.description}</p>
 
           <div className="space-y-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 mb-8">
-            <div className="flex items-center gap-6">
-              <span className="text-foreground font-bold">الكمية:</span>
-              <div className="flex items-center bg-white rounded-xl p-1 border shadow-sm">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"><Minus size={18} /></button>
-                <span className="w-12 text-center font-bold text-lg">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"><Plus size={18} /></button>
+            
+            {/* قسم اختيار الحجم المتوفر */}
+            <div className="space-y-3">
+              <span className="text-foreground font-bold block">اختر الحجم المناسب:</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {/* حجم صغير */}
+                {Number((product as any).priceS) > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSize("small"); }}
+                    className={`p-3 rounded-xl border text-center font-bold transition-all text-sm ${selectedSize === "small" ? "border-primary bg-primary/5 text-primary shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    صغير (S)
+                    <div className="text-xs font-normal mt-1">{Number((product as any).priceS).toFixed(2)} د.أ</div>
+                  </button>
+                )}
+
+                {/* حجم وسط */}
+                {Number((product as any).priceM) > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSize("medium"); }}
+                    className={`p-3 rounded-xl border text-center font-bold transition-all text-sm ${selectedSize === "medium" ? "border-primary bg-primary/5 text-primary shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    وسط (M)
+                    <div className="text-xs font-normal mt-1">{Number((product as any).priceM).toFixed(2)} د.أ</div>
+                  </button>
+                )}
+
+                {/* حجم كبير */}
+                {Number((product as any).priceL) > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSize("large"); }}
+                    className={`p-3 rounded-xl border text-center font-bold transition-all text-sm ${selectedSize === "large" ? "border-primary bg-primary/5 text-primary shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    كبير (L)
+                    <div className="text-xs font-normal mt-1">{Number((product as any).priceL).toFixed(2)} د.أ</div>
+                  </button>
+                )}
+
+                {/* حجم كبير جداً */}
+                {Number((product as any).priceXL) > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedSize("xlarge"); }}
+                    className={`p-3 rounded-xl border text-center font-bold transition-all text-sm ${selectedSize === "xlarge" ? "border-primary bg-primary/5 text-primary shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                  >
+                    كبير جداً (XL)
+                    <div className="text-xs font-normal mt-1">{Number((product as any).priceXL).toFixed(2)} د.أ</div>
+                  </button>
+                )}
               </div>
             </div>
+
+            {/* حقل إضافة ملاحظات وتعديلات للطلب */}
+            <div className="space-y-2">
+              <label className="text-foreground font-bold block">ملاحظاتك أو التعديلات المطلوبة (اختياري):</label>
+              <input
+                type="text"
+                value={customNotes}
+                onChange={(e) => setCustomNotes(e.target.value)}
+                placeholder="مثال: كتابة كرت إهداء، تغليف بلون معين..."
+                className="w-full p-4 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm shadow-sm"
+              />
+            </div>
+
+            {/* التحكم بالكمية وحساب الإجمالي الفعلي المباشر */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-slate-200/60 mt-4">
+              <div className="flex items-center gap-4">
+                <span className="text-foreground font-bold">الكمية:</span>
+                <div className="flex items-center bg-white rounded-xl p-1 border shadow-sm">
+                  <button type="button" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"><Minus size={18} /></button>
+                  <span className="w-12 text-center font-bold text-lg">{quantity}</span>
+                  <button type="button" onClick={() => setQuantity(quantity + 1)} className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-50 transition-colors"><Plus size={18} /></button>
+                </div>
+              </div>
+
+              {/* طباعة المجموع الحسابي الحقيقي والواضح بناءً على المدخلات */}
+              <div className="text-right">
+                <span className="text-xs text-slate-400 block font-medium">الإجمالي الحالي:</span>
+                <span className="text-2xl font-black text-primary">{totalPrice.toFixed(2)} د.أ</span>
+              </div>
+            </div>
+
             <Button 
-              onClick={() => addItem(product, quantity)}
+              onClick={() => {
+                addItem({
+                  ...product,
+                  price: displayPrice.toString(), // السعر المعتمد للمقاس المختار داخل السلة
+                  selectedSize: selectedSize,
+                  customNotes: customNotes
+                } as any, quantity);
+                
+                toast({
+                  title: "تمت الإضافة",
+                  description: `تم إضافة ${product.name} (عدد ${quantity}) بالحجم المختار إلى السلة.`
+                });
+              }}
               disabled={!product.inStock}
               className="w-full py-8 rounded-2xl font-bold text-xl shadow-xl hover:scale-[1.01] active:scale-95 transition-all gap-3"
             >

@@ -1,21 +1,22 @@
+// use-cart.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Product } from '@shared/schema';
 
-// تحديث واجهة عنصر السلة لتشمل الحجم والسعر المختار
+// تحديث واجهة عنصر السلة لتشمل الأحجام الأربعة والملاحظات
 export interface CartItem extends Product {
   quantity: number;
-  selectedSize: "small" | "medium" | "large";
+  selectedSize: "small" | "medium" | "large" | "xlarge";
+  customNotes: string;
 }
 
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  // إضافة الحجم كباراميتر أساسي عند الإضافة للسلة
-  addItem: (product: Product, quantity: number, size: "small" | "medium" | "large") => void;
-  removeItem: (productId: number, size: "small" | "medium" | "large") => void;
-  updateQuantity: (productId: number, size: "small" | "medium" | "large", quantity: number) => void;
+  addItem: (product: Product & { selectedSize?: "small" | "medium" | "large" | "xlarge"; customNotes?: string }, quantity: number) => void;
+  removeItem: (productId: number, size: "small" | "medium" | "large" | "xlarge") => void;
+  updateQuantity: (productId: number, size: "small" | "medium" | "large" | "xlarge", quantity: number) => void;
   clearCart: () => void;
   getCartTotal: () => number;
   getItemCount: () => number;
@@ -28,27 +29,29 @@ export const useCart = create<CartStore>()(
       isOpen: false,
       setIsOpen: (isOpen) => set({ isOpen }),
       
-      addItem: (product, quantity = 1, size = "small") => {
+      addItem: (product, quantity = 1) => {
         set((state) => {
-          // البحث عن المنتج بنفس المعرف ونفس الحجم
+          const size = product.selectedSize || "medium";
+          const notes = product.customNotes || "";
+
+          // البحث عن المنتج بنفس المعرف ونفس الحجم ونفس الملاحظة
           const existingItem = state.items.find(
-            (item) => item.id === product.id && item.selectedSize === size
+            (item) => item.id === product.id && item.selectedSize === size && item.customNotes === notes
           );
 
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.id === product.id && item.selectedSize === size
+                (item.id === product.id && item.selectedSize === size && item.customNotes === notes)
                   ? { ...item, quantity: item.quantity + quantity }
                   : item
               ),
-              isOpen: true,
+              isOpen: true
             };
           }
-          
-          // إضافة عنصر جديد مع تحديد الحجم المختار
+
           return { 
-            items: [...state.items, { ...product, quantity, selectedSize: size }], 
+            items: [...state.items, { ...product, quantity, selectedSize: size, customNotes: notes } as CartItem], 
             isOpen: true 
           };
         });
@@ -79,10 +82,14 @@ export const useCart = create<CartStore>()(
       getCartTotal: () => {
         const state = get();
         return state.items.reduce((total, item) => {
-          // اختيار السعر الصحيح بناءً على الحجم المخزن في العنصر
-          let price = Number(item.priceSmall);
-          if (item.selectedSize === "medium") price = Number(item.priceMedium);
-          if (item.selectedSize === "large") price = Number(item.priceLarge);
+          // حساب السعر الافتراضي العام أولاً
+          let price = Number(item.price);
+          
+          // اعتماد سعر المقاس المناسب بناءً على الحقول الجديدة في الـ Schema
+          if (item.selectedSize === "small" && (item as any).priceS && Number((item as any).priceS) > 0) price = Number((item as any).priceS);
+          if (item.selectedSize === "medium" && (item as any).priceM && Number((item as any).priceM) > 0) price = Number((item as any).priceM);
+          if (item.selectedSize === "large" && (item as any).priceL && Number((item as any).priceL) > 0) price = Number((item as any).priceL);
+          if (item.selectedSize === "xlarge" && (item as any).priceXL && Number((item as any).priceXL) > 0) price = Number((item as any).priceXL);
           
           return total + price * item.quantity;
         }, 0);
@@ -95,7 +102,6 @@ export const useCart = create<CartStore>()(
     }),
     {
       name: 'flower-shop-cart',
-      partialize: (state) => ({ items: state.items }),
     }
   )
 );
