@@ -7,22 +7,21 @@ import { z } from "zod";
 import { insertUserSchema, insertReviewSchema, checkoutSchema, insertProductSchema } from "@shared/schema";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
-// 1. إعداد مرسل البريد
-// 1. إعداد مرسل البريد (نسخة مصححة لـ Render)
+
 console.log("EMAIL_USER =", process.env.EMAIL_USER);
 console.log("EMAIL_PASS =", process.env.EMAIL_PASS);
-// إعداد مرسل البريد المطور لبيئة Render
+
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, 
+  port: 465,
+  secure: true, 
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS, // سيعمل سواء بفراغات أو بدون، لكن الأفضل بدون
+    pass: process.env.EMAIL_PASS, 
   },
   tls: {
     rejectUnauthorized: false,
-    family: 4 // هذا السطر ضروري جداً لبيئة Render
+    family: 4 
   }
 });
 
@@ -34,7 +33,6 @@ transporter.verify((error, success) => {
   }
 });
 
-// --- وظائف الحماية (Middleware) ---
 const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.session.userId) return res.status(401).json({ message: "غير مصرح لك" });
   const user = await storage.getUser(req.session.userId);
@@ -44,7 +42,6 @@ const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
 
 export async function registerRoutes(app: Express, httpServer: Server): Promise<Server> {
   
-  // --- 1. نظام المستخدمين ---
   app.get("/api/user", async (req, res) => {
     if (!req.session.userId) return res.status(401).send();
     const user = await storage.getUser(req.session.userId);
@@ -97,7 +94,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     });
   });
 
-  // --- 2. إدارة الأعضاء (للمديرين فقط) ---
   app.get("/api/users", isAdmin, async (_req, res) => {
     const allUsers = await storage.getUsers();
     res.json(allUsers.map(({ password, ...u }) => u));
@@ -113,7 +109,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     res.json(updatedUser);
   });
 
-  // --- 3. مسارات المنتجات ---
   app.get("/api/products", async (_req, res) => res.json(await storage.getProducts()));
 
   app.get("/api/products/:id", async (req, res) => {
@@ -132,7 +127,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  // مسار تعديل المنتج (PATCH)
   app.patch("/api/products/:id", isAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -152,7 +146,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     res.sendStatus(204);
   });
 
-  // --- 4. التقييمات ---
   app.get("/api/products/:id/reviews", async (req, res) => {
     res.json(await storage.getReviewsByProduct(Number(req.params.id)));
   });
@@ -168,7 +161,6 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
     }
   });
 
-  // --- 5. الطلبات ---
   app.get("/api/orders", isAdmin, async (_req, res) => {
     try {
       const allOrders = await storage.getOrders();
@@ -200,40 +192,76 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       const orderItemsHtml = validatedData.items.map(item => {
         const product = allProducts.find(p => p.id === item.productId);
         
-        // تحويل مسمى الحجم إلى لغة عربية مفهومة في فاتورة الإيميل
         let sizeName = "وسط (M)";
         if (item.selectedSize === "small") sizeName = "صغير (S)";
         if (item.selectedSize === "medium") sizeName = "وسط (M)";
         if (item.selectedSize === "large") sizeName = "كبير (L)";
         if (item.selectedSize === "xlarge") sizeName = "كبير جداً (XL)";
 
-        // تجهيز نص الملاحظات لو العميل كتب شيئاً
         const notesHtml = item.customNotes 
           ? `<div style="color: #666; font-size: 11px; margin-top: 4px; background: #f5f5f5; padding: 4px 8px; border-radius: 6px;"><b>إضافات وملاحظات العميل:</b> ${item.customNotes}</div>` 
           : '';
 
-        // حساب السعر الفعلي بناءً على الحجم المختار إن وجد، وإلا نعتمد السعر الافتراضي
+        // استخراج وعرض أسماء الإضافات من الـ JSON
+        let addonsHtml = '';
+        let addonsTotalPrice = 0;
+        if (item.selectedAddons) {
+          try {
+            const addonsArray = JSON.parse(item.selectedAddons);
+            if (Array.isArray(addonsArray) && addonsArray.length > 0) {
+              const names = addonsArray.map((a: any) => {
+                addonsTotalPrice += Number(a.price || 0);
+                return `${a.name} (+${a.price} د.أ)`;
+              }).join('، ');
+              addonsHtml = `<div style="color: #10b981; font-size: 11px; margin-top: 2px; font-weight: bold;">🎁 الهدايا المرفقة: ${names}</div>`;
+            }
+          } catch(e) {
+            console.error("Error parsing addons JSON", e);
+          }
+        }
+
         let itemPrice = Number(product?.price || 0);
         if (item.selectedSize === "small" && product?.priceS && Number(product.priceS) > 0) itemPrice = Number(product.priceS);
         if (item.selectedSize === "medium" && product?.priceM && Number(product.priceM) > 0) itemPrice = Number(product.priceM);
         if (item.selectedSize === "large" && product?.priceL && Number(product.priceL) > 0) itemPrice = Number(product.priceL);
         if (item.selectedSize === "xlarge" && product?.priceXL && Number(product.priceXL) > 0) itemPrice = Number(product.priceXL);
 
+        const totalProductRowCost = (itemPrice + addonsTotalPrice) * item.quantity;
+
         return `
           <tr style="border-bottom: 1px solid #eee;">
             <td style="padding: 10px; text-align: right;">
               <span style="font-weight: bold;">${product?.name || 'منتج'}</span>
               <div style="color: #d41d6d; font-size: 11px; margin-top: 2px;">الحجم: ${sizeName}</div>
+              ${addonsHtml}
               ${notesHtml}
             </td>
             <td style="padding: 10px; text-align: center;">${item.quantity}</td>
-            <td style="padding: 10px; text-align: left;">${(itemPrice * item.quantity)} د.أ</td>
+            <td style="padding: 10px; text-align: left;">${totalProductRowCost.toFixed(2)} د.أ</td>
           </tr>
         `;
       }).join('');
 
+      // بناء معلومات الشحن والهدايا المخصصة لرسالة البريد
+      let deliveryDetailsHtml = `
+        <p><b>نوع التوصيل:</b> ${order.deliveryType === "express" ? "⚡ توصيل فوري وسريع خلال ساعات" : "توصيل عادي خلال اليوم التالي"}</p>
+        <p><b>تكلفة التوصيل:</b> ${Number(order.deliveryCost) > 0 ? `${order.deliveryCost} د.أ` : "مجاني"}</p>
+        ${order.deliveryDate ? `<p><b>تاريخ التوصيل المطلوب:</b> ${order.deliveryDate}</p>` : ''}
+        ${order.deliveryTime ? `<p><b>وقت التسليم المفضل:</b> ${order.deliveryTime}</p>` : ''}
+      `;
+
+      if (order.isGift) {
+        deliveryDetailsHtml += `
+          <div style="margin-top: 15px; background: #fff5f8; padding: 12px; border-radius: 10px; border: 1px dashed #ff85a1;">
+            <p style="margin: 0 0 5px; color: #d41d6d; font-weight: bold;">🎁 تم طلب هذا المنتج كهدية لشخص آخر:</p>
+            <p style="margin: 2px 0;"><b>اسم المستلم:</b> ${order.recipientName}</p>
+            <p style="margin: 2px 0;"><b>جوال المستلم:</b> ${order.recipientPhone}</p>
+          </div>
+        `;
+      }
+
       const mailOptions = {
-        from: '"بلانتو 🌸" <hm2653601@gmail.com>',
+        from: `"بلانتو 🌸" <${process.env.EMAIL_USER}>`,
         to: order.customerEmail,
         subject: `تأكيد طلبك رقم #${order.id} - بلانتو 🌸`,
         html: `
@@ -259,11 +287,12 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
               <div style="margin-top: 20px; background: #fff5f8; padding: 15px; border-radius: 12px; text-align: left;">
                 <p style="margin: 0; font-size: 18px;"><b>الإجمالي النهائي:</b> <span style="color: #d41d6d; font-weight: bold;">${order.total} د.أ</span></p>
               </div>
-              <h3 style="color: #d41d6d; margin-top: 30px;">بيانات التوصيل:</h3>
-              <div style="background: #fafafa; padding: 15px; border-radius: 12px; font-size: 14px;">
-                <p><b>الاسم:</b> ${order.customerName}</p>
-                <p><b>العنوان:</b> ${order.customerAddress}</p>
+              <h3 style="color: #d41d6d; margin-top: 30px;">بيانات التوصيل والطلب:</h3>
+              <div style="background: #fafafa; padding: 15px; border-radius: 12px; font-size: 14px; line-height: 1.6;">
+                <p><b>اسم المشتري:</b> ${order.customerName}</p>
+                <p><b>عنوان التوصيل:</b> ${order.customerAddress}</p>
                 <p><b>الجوال:</b> ${order.customerPhone}</p>
+                ${deliveryDetailsHtml}
               </div>
             </div>
           </div>
@@ -276,7 +305,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
         });
         
         transporter.sendMail({
-          from: '"بلانتو 🌸" <hm2653601@gmail.com>',
+          from: `"بلانتو 🌸" <${process.env.EMAIL_USER}>`,
           to: "hm2653601@gmail.com",
           subject: `طلب جديد رقم #${order.id} - بلانتو 🌸`,
           html: `
@@ -286,14 +315,15 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
                 <p>رقم الطلب #${order.id}</p>
               </div>
               <div style="padding: 20px;">
-                <h3 style="color: #d41d6d;">بيانات العميل</h3>
-                <div style="background:#fafafa;padding:15px;border-radius:12px">
+                <h3 style="color: #d41d6d;">بيانات العميل والشحن</h3>
+                <div style="background:#fafafa;padding:15px;border-radius:12px; font-size:14px; line-height: 1.6;">
                   <p><b>الاسم:</b> ${order.customerName}</p>
                   <p><b>البريد:</b> ${order.customerEmail}</p>
                   <p><b>الجوال:</b> ${order.customerPhone}</p>
                   <p><b>العنوان:</b> ${order.customerAddress}</p>
+                  ${deliveryDetailsHtml}
                 </div>
-                <h3 style="color:#d41d6d;margin-top:20px">تفاصيل الطلب</h3>
+                <h3 style="color:#d41d6d;margin-top:20px">تفاصيل المنتجات المطلوبة</h3>
                 <table style="width:100%;border-collapse:collapse">
                   <thead>
                     <tr style="background:#fdf2f8">
@@ -307,7 +337,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
                   </tbody>
                 </table>
                 <div style="margin-top:20px;background:#fff5f8;padding:15px;border-radius:12px">
-                  <h3>الإجمالي : ${order.total} د.أ</h3>
+                  <h3>الإجمالي الكلي المستحق: ${order.total} د.أ</h3>
                 </div>
               </div>
             </div>
@@ -336,7 +366,7 @@ export async function registerRoutes(app: Express, httpServer: Server): Promise<
       };
 
       const mailOptions = {
-        from: '"بلانتو 🌸" <hm2653601@gmail.com>',
+        from: `"بلانتو 🌸" <${process.env.EMAIL_USER}>`,
         to: updatedOrder.customerEmail,
         subject: `تحديث جديد لطلبك رقم #${updatedOrder.id}`,
         html: `

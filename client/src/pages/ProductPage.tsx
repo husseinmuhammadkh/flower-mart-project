@@ -1,16 +1,23 @@
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Product, type Review } from "@shared/schema";
-import { useCart } from "@/store/use-cart";
+import { useCart, type CartAddon } from "@/store/use-cart";
 import { apiRequest } from "@/lib/queryClient";
 import { useState, useEffect } from "react";
 import { 
-  Minus, Plus, ShoppingBag, ArrowRight, Loader2, Star, MessageSquare, User
+  Minus, Plus, ShoppingBag, ArrowRight, Loader2, Star, MessageSquare, User, Gift
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+
+// تعريف قائمة الإضافات المتاحة للشراء في المتجر بأسعارها الثابتة
+const AVAILABLE_ADDONS: Omit<CartAddon, 'id'>[] = [
+  { name: "شوكولاتة فاخرة 🍫", price: 5.00 },
+  { name: "فازة زجاجية راقية 🍶", price: 4.00 },
+  { name: "بالون هيليوم مناسبات 🎈", price: 3.00 }
+];
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,9 +30,10 @@ export default function ProductPage() {
   const [userRating, setUserRating] = useState(5);
   const [comment, setComment] = useState("");
   
-  // الحقول الجديدة للأحجام والملاحظات
+  // الحقول الجديدة للأحجام والملاحظات والإضافات المختارة
   const [selectedSize, setSelectedSize] = useState<"small" | "medium" | "large" | "xlarge">("medium");
   const [customNotes, setCustomNotes] = useState("");
+  const [selectedAddons, setSelectedAddons] = useState<CartAddon[]>([]);
 
   const productId = id ? Number(id) : null;
 
@@ -84,6 +92,23 @@ export default function ProductPage() {
     });
   };
 
+  // ميثود للتحكم في اختيار الإضافات وإلغائها
+  const toggleAddon = (addonName: string, addonPrice: number) => {
+    setSelectedAddons(prev => {
+      const exists = prev.find(a => a.name === addonName);
+      if (exists) {
+        return prev.filter(a => a.name !== addonName);
+      } else {
+        const newAddon: CartAddon = {
+          id: `addon-${addonName}-${Date.now()}`,
+          name: addonName,
+          price: addonPrice
+        };
+        return [...prev, newAddon];
+      }
+    });
+  };
+
   if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={40} /></div>;
   
   if (error || !product) return (
@@ -101,8 +126,11 @@ export default function ProductPage() {
   if (selectedSize === "large" && (product as any).priceL && Number((product as any).priceL) > 0) displayPrice = Number((product as any).priceL);
   if (selectedSize === "xlarge" && (product as any).priceXL && Number((product as any).priceXL) > 0) displayPrice = Number((product as any).priceXL);
 
-  // الحساب الإجمالي الصحيح (السعر × الكمية المستهدفة)
-  const totalPrice = displayPrice * quantity;
+  // إضافة مجموع أسعار الإضافات المختارة مع باقة الورد
+  const addonsTotalPrice = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+
+  // الحساب الإجمالي المطور ( (سعر المقاس + مجموع الإضافات) × الكمية المطلوبة )
+  const totalPrice = (displayPrice + addonsTotalPrice) * quantity;
 
   return (
     <div className="min-h-screen pt-28 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 font-['Cairo'] text-right" dir="rtl">
@@ -181,6 +209,31 @@ export default function ProductPage() {
               </div>
             </div>
 
+            {/* قسم الإضافات المقترحة مع الورد لزيادة المبيعات والطلب كهدية */}
+            <div className="space-y-3 pt-2">
+              <span className="text-foreground font-bold flex items-center gap-2">
+                <Gift size={18} className="text-primary" /> أضف هدايا مكملة مع طلبك (اختياري):
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {AVAILABLE_ADDONS.map((addon) => {
+                  const isChecked = selectedAddons.some(a => a.name === addon.name);
+                  return (
+                    <button
+                      key={addon.name}
+                      type="button"
+                      onClick={() => toggleAddon(addon.name, addon.price)}
+                      className={`p-3 rounded-xl border text-right transition-all text-xs flex flex-col justify-between ${isChecked ? "border-emerald-500 bg-emerald-50/40 text-emerald-900 font-bold shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                    >
+                      <span>{addon.name}</span>
+                      <span className={`text-xs mt-1 block font-semibold ${isChecked ? "text-emerald-600" : "text-slate-400"}`}>
+                        +{addon.price.toFixed(2)} د.أ
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* حقل إضافة ملاحظات وتعديلات للطلب */}
             <div className="space-y-2">
               <label className="text-foreground font-bold block">ملاحظاتك أو التعديلات المطلوبة (اختياري):</label>
@@ -204,7 +257,7 @@ export default function ProductPage() {
                 </div>
               </div>
 
-              {/* طباعة المجموع الحسابي الحقيقي والواضح بناءً على المدخلات */}
+              {/* طباعة المجموع الحسابي الحقيقي والواضح بناءً على المدخلات شامل الإضافات */}
               <div className="text-right">
                 <span className="text-xs text-slate-400 block font-medium">الإجمالي الحالي:</span>
                 <span className="text-2xl font-black text-primary">{totalPrice.toFixed(2)} د.أ</span>
@@ -217,13 +270,19 @@ export default function ProductPage() {
                   ...product,
                   price: displayPrice.toString(), // السعر المعتمد للمقاس المختار داخل السلة
                   selectedSize: selectedSize,
-                  customNotes: customNotes
+                  customNotes: customNotes,
+                  selectedAddons: selectedAddons // إرسال الإضافات المرافقة للورد كاملة للسلة
                 } as any, quantity);
                 
                 toast({
                   title: "تمت الإضافة",
-                  description: `تم إضافة ${product.name} (عدد ${quantity}) بالحجم المختار إلى السلة.`
+                  description: `تم إضافة ${product.name} (عدد ${quantity}) مع إضافاتك المختارة إلى السلة بنجاح.`
                 });
+                
+                // إعادة تصفير الإضافات والملاحظات بعد التخزين الناجح
+                setCustomNotes("");
+                setSelectedAddons([]);
+                setQuantity(1);
               }}
               disabled={!product.inStock}
               className="w-full py-8 rounded-2xl font-bold text-xl shadow-xl hover:scale-[1.01] active:scale-95 transition-all gap-3"

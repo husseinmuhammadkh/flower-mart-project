@@ -40,13 +40,27 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// جدول الطلبات (تمت إضافة رقم الهاتف هنا)
+// جدول الطلبات (مطور ليشمل ميزات الهدايا، المواعيد، والتوصيل السريع)
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
-  customerPhone: text("customer_phone").notNull(), // الحقل الجديد
+  customerPhone: text("customer_phone").notNull(),
   customerAddress: text("customer_address").notNull(),
+  
+  // حقول نظام الهدايا والمستلم الآخر
+  isGift: boolean("is_gift").default(false).notNull(),
+  recipientName: text("recipient_name").default(""),
+  recipientPhone: text("recipient_phone").default(""),
+  
+  // حقول مواعيد التوصيل المتوقعة
+  deliveryDate: text("delivery_date").default(""),
+  deliveryTime: text("delivery_time").default(""),
+  
+  // حقول نوع وتكلفة التوصيل السريع
+  deliveryType: text("delivery_type").default("normal").notNull(), // normal or express
+  deliveryCost: numeric("delivery_cost", { precision: 10, scale: 2 }).default("0.00").notNull(), // 0.00 أو 2.00
+  
   total: numeric("total", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -60,7 +74,8 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   priceAtTime: numeric("price_at_time", { precision: 10, scale: 2 }).notNull(),
   selectedSize: text("selected_size").default("medium").notNull(), // تخزين المقاس المطلوب (s, m, l, xl)
-  customNotes: text("custom_notes").default("").notNull() // حقل كتابة الإضافات أو التعديلات من الزبون
+  customNotes: text("custom_notes").default("").notNull(), // حقل كتابة الإضافات أو التعديلات من الزبون
+  selectedAddons: text("selected_addons").default("").notNull() // تخزين الإضافات المختارة مثل (شوكولاتة، بالون، فازة) كسلسلة نصية
 });
 
 // العلاقات
@@ -123,19 +138,29 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 
-// تحديث مخطط الـ Checkout ليشمل رقم الهاتف
+// تحديث مخطط الـ Checkout ليشمل حقول الهدايا، التوصيل، الإضافات والتوصيل السريع
 export const checkoutSchema = z.object({
   customerName: z.string().min(2, "الاسم مطلوب"),
   customerEmail: z.string().email("بريد إلكتروني غير صالح"),
-  customerPhone: z.string().min(10, "رقم الهاتف مطلوب (10 أرقام على الأقل)"), // إضافة التحقق
+  customerPhone: z.string().min(10, "رقم الهاتف مطلوب (10 أرقام على الأقل)"),
   customerAddress: z.string().min(5, "العنوان مطلوب"),
+  
+  // التحقق من حقول الهدايا والمواعيد والتوصيل المضافة حديثاً
+  isGift: z.boolean().default(false),
+  recipientName: z.string().optional().default(""),
+  recipientPhone: z.string().optional().default(""),
+  deliveryDate: z.string().optional().default(""),
+  deliveryTime: z.string().optional().default(""),
+  deliveryType: z.string().default("normal"), // normal or express
+  deliveryCost: z.string().default("0.00"), // "0.00" أو "2.00"
+  
   items: z.array(z.object({
     productId: z.number(),
     quantity: z.number().min(1),
-    selectedSize: z.string().default("medium"), // استقبال الحجم من الفرونت إند
-    customNotes: z.string().default("") // استقبال ملاحظات التعديل والإضافات
+    selectedSize: z.string().default("medium"),
+    customNotes: z.string().default(""),
+    selectedAddons: z.string().default("") // استقبال تفاصيل الشوكولاتة والبالونات كـ string
   })).min(1, "السلة فارغة")
 });
 
 export type CheckoutRequest = z.infer<typeof checkoutSchema>;
-// second one 141

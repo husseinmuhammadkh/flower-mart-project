@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useCart } from "@/store/use-cart"; // تأكد من هذا المسار
+import { useCart } from "@/store/use-cart"; 
 import { Plus, Check } from "lucide-react"; 
 import type { Product } from "@shared/schema";
 import { motion } from "framer-motion";
@@ -9,11 +9,23 @@ export function ProductCard({ product, index }: { product: Product; index: numbe
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
+  // 1. تحديد السعر المعروض بناءً على توفر السعر الوسط (Medium)
+  const hasPriceM = (product as any).priceM && Number((product as any).priceM) > 0;
+  const displayPrice = hasPriceM ? Number((product as any).priceM) : Number(product.price);
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    addItem(product); // استخدام الدالة من ملفك
+    // 2. تمرير الحجم المعتمد (medium) وسعره الصحيح إلى السلة
+    addItem({
+      ...product,
+      price: displayPrice.toString(),
+      selectedSize: "medium",
+      customNotes: "",
+      selectedAddons: []
+    } as any, 1);
+
     setAdded(true);
     setTimeout(() => setAdded(false), 1000);
   };
@@ -35,7 +47,12 @@ export function ProductCard({ product, index }: { product: Product; index: numbe
           <h3 className="text-xl font-bold text-foreground mb-1 hover:text-primary transition-colors cursor-pointer">{product.name}</h3>
         </Link>
         <div className="mt-auto flex items-center justify-between flex-row-reverse">
-          <span className="text-lg font-bold text-primary">{Number(product.price).toFixed(2)} د.أ</span>
+          {/* عرض السعر المحدث مع تسمية توضيحية خفيفة للزبون */}
+          <div className="flex flex-col items-start font-['Cairo']">
+            <span className="text-[10px] text-muted-foreground font-semibold">الحجم الوسط (M)</span>
+            <span className="text-lg font-black text-primary">{displayPrice.toFixed(2)} د.أ</span>
+          </div>
+
           <button
             onClick={handleAddToCart}
             disabled={!product.inStock || added}
